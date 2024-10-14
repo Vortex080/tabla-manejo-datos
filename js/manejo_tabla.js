@@ -55,7 +55,7 @@ window.addEventListener('load', function () {
     // Celda donde esta situada dni
     const dni = document.getElementById('dni');
     // Tabla del index
-    let tabla = document.getElementById('tabla');
+    let tabla = document.getElementsByTagName('tabla');
 
     let orden = -1;
 
@@ -100,7 +100,7 @@ window.addEventListener('load', function () {
         }
     });
 
-    function rowDelete(){
+    function rowDelete() {
         this.parentElement.parentElement.remove();
     }
 

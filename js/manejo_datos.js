@@ -13,7 +13,7 @@ window.addEventListener('load', function () {
             auxtbody.appendChild(tBody.firstElementChild);
             let modelo = auxtbody.firstElementChild;
             container.appendChild(tabla);
-            fetch('datos/alumnos.json')
+            fetch('BD/datos.json')
                 .then(respuesta => respuesta.json())
                 .then(datos => {
                     datos.forEach(element => {
