@@ -21,3 +21,9 @@ ademas de poder añadir a la tabla
 - Leer datos fichero
 - Limpiar tabla
 
+
+## ESTRUCTURA DE ARCHIVOS
+
+![alttext](https://cdn.discordapp.com/attachments/1137333484919193653/1295662526759043134/image.png?ex=670f7742&is=670e25c2&hm=dde690e8796f421cbd8c3555ca85be44c185ce9bce864750a848b978ff64e115&)
+
+
