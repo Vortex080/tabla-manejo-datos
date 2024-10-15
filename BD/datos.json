@@ -2,5 +2,9 @@
     {
         "dni": "12345678H",
         "nombre": "Juan"
+    },
+    {
+        "dni": "12345679H",
+        "nombre": "Lucas"
     }
 ]

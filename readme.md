@@ -15,7 +15,9 @@ ademas de poder añadir a la tabla
 
 ## BOTONES
 
-- Cargar tabla
-- Guardar Información de la tabla
+- Leer datos localStorage
+- Grabar Datos
+- Traer datos servidor
+- Leer datos fichero
 - Limpiar tabla
 
