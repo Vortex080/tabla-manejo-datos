@@ -10,7 +10,7 @@ window.addEventListener('load', function () {
     // Fetch para cargar la plantilla de la tabla desde el archivo 'tabla.html'
     fetch('./plantillas/tabla.html')
         .then(respuesta => respuesta.text())
-        .then(texto => { 
+        .then(texto => {
             // Asigna el contenido HTML traído a la variable aux
             aux.innerHTML = texto;
             // Obtiene la primera tabla dentro de aux
@@ -22,39 +22,39 @@ window.addEventListener('load', function () {
             modelo = auxtbody.firstElementChild;
             // Inserta la tabla completa en el contenedor
             container.appendChild(tabla);
-            
+
             // Variable para manejar el orden de la columna (ascendente/descendente)
             let orden = -1;
 
             // Asigna eventos para ordenar la tabla al hacer clic en las columnas de nombre y dni
             const nombre = document.getElementById('nombre'); // Celda donde está el nombre
             const dni = document.getElementById('dni'); // Celda donde está el dni
-            
+
             // Evento para ordenar por la columna de nombre
             nombre.addEventListener('click', () => tabla.ordenar(1, orden = orden * -1));
             // Evento para ordenar por la columna de dni
             dni.addEventListener('click', () => tabla.ordenar(0, orden = orden * -1));
-            
+
             // Evento para editar una fila al hacer doble clic en la tabla
-            tabla.addEventListener('dblclick', () => edita());
+            tabla.addEventListener('dblclick', () => tabla.edita());
 
             // Botón para guardar los datos en localStorage
             let saveDB = this.document.createElement('button');
             saveDB.innerHTML = 'Grabar datos';
             container.appendChild(saveDB);
-            saveDB.addEventListener('click', () => savelocalStorage());
+            saveDB.addEventListener('click', () => tabla.savelocalStorage());
 
             // Botón para cargar los datos desde un archivo externo
             let getDB = document.createElement('button');
             getDB.innerHTML = 'Traer Datos Fichero';
             container.appendChild(getDB);
-            getDB.addEventListener('click', () => getDataDB(modelo));
+            getDB.addEventListener('click', () => tabla.getDataDB(modelo));
 
             // Botón para cargar los datos desde localStorage
             let getLocal = this.document.createElement('button');
             getLocal.innerHTML = 'Traer Datos LocalStorage';
             container.appendChild(getLocal);
-            getLocal.addEventListener('click', () => getLocalStorage());
+            getLocal.addEventListener('click', () => tabla.getLocalStorage());
 
             // Botón para limpiar la tabla
             let clearbtn = document.createElement('button');
@@ -109,11 +109,11 @@ HTMLTableElement.prototype.ordenar = function (columna, orden = 1, metodo) {
 }
 
 // Función para guardar los datos de la tabla en localStorage
-function savelocalStorage() {
+HTMLTableElement.prototype.savelocalStorage = function () {
     let datos = [];
     // Recorre cada fila de la tabla (omitida la primera fila que es la cabecera)
-    for (let i = 1; i < tabla.rows.length; i++) {
-        let savefila = tabla.rows[i];
+    for (let i = 1; i < this.rows.length; i++) {
+        let savefila = this.rows[i];
         // Crea un objeto con el dni y el nombre de cada fila
         let dbfila = {
             dni: savefila.cells[0].textContent,
@@ -130,7 +130,7 @@ function savelocalStorage() {
 }
 
 // Función para habilitar la edición de una fila al hacer doble clic en ella
-function edita() {
+HTMLTableElement.prototype.edita = function () {
     let newrow = document.createElement('tr');
     let dnicell = document.createElement('td');
     let namecell = document.createElement('td');
@@ -138,16 +138,17 @@ function edita() {
     newrow.appendChild(namecell);
 
     let dniinp = document.createElement('input');
+    dniinp.disabled = true; // Deshabilitar el input inicialmente
     let nameinp = document.createElement('input');
+    nameinp.disabled = true; // Deshabilitar el input inicialmente
     dnicell.appendChild(dniinp);
     namecell.appendChild(nameinp);
 
-    let tBody = tabla.tBodies[0];
+    let tBody = this.tBodies[0];
     tBody.appendChild(newrow);
 
-    let table = document.getElementById('tabla');
-    let thead = table.querySelector('thead tr');
-    let rows = table.querySelectorAll('tbody tr');
+    let thead = this.querySelector('thead tr');
+    let rows = this.querySelectorAll('tbody tr');
 
     // Añade la columna de "Acciones" solo si no existe
     if (!document.getElementById('acciones-header')) {
@@ -171,7 +172,9 @@ function edita() {
             // Botón para borrar
             let buttonB = document.createElement('button');
             buttonB.textContent = 'b';
-            buttonB.addEventListener('click', rowDelete());
+            buttonB.addEventListener('click', function () {
+                rowDelete(row); // Pasa la fila como argumento para eliminarla
+            });
 
             tdAcciones.appendChild(buttonE);
             tdAcciones.appendChild(buttonB);
@@ -180,77 +183,85 @@ function edita() {
     }
 }
 
-// Función para eliminar una fila (comentada)
-function rowDelete() {
-    //this.parentElement.parentElement.remove();
-}
-
-// Convierte una fila a modo editable (inputs en cada celda)
+// Función para habilitar los inputs y cambiar los botones a guardar/cancelar
 function convertirAFilaEditable(row) {
-    let celdas = row.querySelectorAll('td');
-    for (let i = 0; i < celdas.length - 1; i++) { // Evita la columna de acciones
-        let textoActual = celdas[i].textContent;
-        celdas[i].innerHTML = `<input type="text" value="${textoActual}" />`;
-    }
+    let inputs = row.querySelectorAll('input');
+    inputs.forEach(input => input.disabled = false); // Habilita los inputs
 }
 
-// Cambia los botones de acciones entre modos (editar/guardar/cancelar)
-function toggleButtons(cell, buttons) {
-    // Limpia la celda de botones
-    cell.innerHTML = '';
+// Función para alternar entre botones de edición/borrado y guardar/cancelar
+function toggleButtons(tdAcciones, buttons) {
+    // Elimina los botones actuales
+    tdAcciones.innerHTML = '';
 
-    buttons.forEach(function (letter) {
+    // Crear botones según los valores pasados
+    buttons.forEach(function (buttonType) {
         let button = document.createElement('button');
-        button.textContent = letter;
-
-        if (letter === 'g') {
-            button.addEventListener('click', function () {
-                convertirAFilaNoEditable(cell.parentElement); // Convierte los inputs a texto
-            });
-        } else if (letter === 'c') {
-            button.addEventListener('click', function () {
-                toggleButtons(cell, ['e', 'b']); // Cambia de nuevo a los botones de editar/borrar
-            });
-        }
-
-        // Añade el botón a la celda
-        cell.appendChild(button);
+        button.textContent = buttonType;
+        button.addEventListener('click', function () {
+            if (buttonType === 'g') { // Si es guardar
+                convertirAFilaNoEditable(tdAcciones.parentNode); // Guardar la fila
+                toggleButtons(tdAcciones, ['e', 'b']); // Vuelve a los botones editar/borrar
+            } else if (buttonType === 'c') { // Si es cancelar
+                cancelarEdicion(tdAcciones.parentNode); // Cancela la edición
+                toggleButtons(tdAcciones, ['e', 'b']); // Vuelve a los botones editar/borrar
+            }
+        });
+        tdAcciones.appendChild(button);
     });
 }
 
-// Convierte una fila de editable a no editable, guardando los valores ingresados
+// Función para convertir una fila a no editable, deshabilitando los inputs y actualizando los valores
 function convertirAFilaNoEditable(row) {
-    let celdas = row.querySelectorAll('td');
-    for (let i = 0; i < celdas.length - 1; i++) { // Evita la columna de acciones
-        let input = celdas[i].querySelector('input');
-        if (input) {
-            let valorActual = input.value; // Obtiene el valor del input
-            celdas[i].textContent = valorActual; // Establece el valor en la celda
-        }
-    }
+    let inputs = row.querySelectorAll('input');
+    inputs.forEach(input => {
+        input.disabled = true; // Deshabilitar los inputs tras guardar
+        let value = input.value;
+        let cell = input.parentElement;
+        cell.textContent = value; // Actualiza la celda con el valor del input
+    });
+}
+
+// Función para cancelar la edición (revertir cambios)
+function cancelarEdicion(row) {
+    let inputs = row.querySelectorAll('input');
+    inputs.forEach(input => {
+        input.disabled = true; // Vuelve a deshabilitar los inputs
+    });
+}
+
+// Función para eliminar la fila
+function rowDelete(row) {
+    row.remove(); // Elimina la fila de la tabla
 }
 
 // Función para añadir una nueva línea en la tabla usando el modelo de fila
-function addline(modelo) {
-    let tBody = tabla.tBodies[0]; // Obtiene el tbody de la tabla
+HTMLTableElement.prototype.addline = function (modelo) {
+    let tBody = this.tBodies[0]; // Obtiene el tbody de la tabla
     let fila = modelo.cloneNode(true); // Clona el modelo de fila
     let dniinp = document.createElement('input'); // Crea un input para dni
+    dniinp.disabled = true; // Deshabilita el input
     let nameinp = document.createElement('input'); // Crea un input para nombre
+    nameinp.disabled = true; // Deshabilita el input
     fila.children[0].appendChild(dniinp); // Añade el input al td de dni
     fila.children[1].appendChild(nameinp); // Añade el input al td de nombre
     tBody.appendChild(fila); // Agrega la nueva fila al tbody
 }
 
 // Función para obtener datos del localStorage y mostrarlos en la tabla
-function getLocalStorage() {
+HTMLTableElement.prototype.getLocalStorage = function () {
     let data = localStorage.getItem('data'); // Obtiene los datos del localStorage
 
     if (data) {
         let datos = JSON.parse(data); // Parsea los datos a un objeto
-        let tbody = tabla.tBodies[0]; // Obtiene el tbody de la tabla
-        tbody.innerHTML = ''; // Limpia el tbody antes de agregar nuevos datos
+        let tbody = this.tBodies[0]; // Obtiene el tbody de la tabla
 
-        // Por cada elemento, crea una nueva fila en la tabla
+        // Limpia el tbody para eliminar cualquier fila existente (excepto los headers)
+        while (tbody.firstChild) {
+            tbody.removeChild(tbody.firstChild);
+        }
+
+        // Por cada elemento en los datos del localStorage, crea una nueva fila
         datos.forEach(element => {
             let newrow = document.createElement('tr'); // Crea una nueva fila
 
@@ -267,10 +278,17 @@ function getLocalStorage() {
     }
 }
 
+
 // Función para obtener datos desde un archivo JSON y mostrarlos en la tabla
-function getDataDB(modelo, tbody) {
-    // Trae la plantilla
-    let tBody = tabla.tBodies[0];
+HTMLTableElement.prototype.getDataDB = function (modelo) {
+    // Trae el tbody de la tabla
+    let tBody = this.tBodies[0];
+
+    // Limpia el tbody para eliminar cualquier fila existente (excepto los headers)
+    while (tBody.firstChild) {
+        tBody.removeChild(tBody.firstChild);
+    }
+
     // Fetch para obtener la plantilla
     fetch('./plantillas/tabla.html')
         .then(respuesta => respuesta.text())
@@ -289,3 +307,4 @@ function getDataDB(modelo, tbody) {
                 });
         });
 }
+
